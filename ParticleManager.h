@@ -5,11 +5,12 @@
 #include <d3d12.h>
 #include <DirectXMath.h>
 #include <d3dx12.h>
+#include <forward_list>
 
 /// <summary>
 /// 3Dオブジェクト
 /// </summary>
-class Object3d
+class ParticleManager
 {
 private: // エイリアス
 	// Microsoft::WRL::を省略
@@ -25,12 +26,38 @@ public: // サブクラス
 	struct VertexPos
 	{
 		XMFLOAT3 pos; // xyz座標
+		float scale; //スケール
 	};
 
 	// 定数バッファ用データ構造体
 	struct ConstBufferData
 	{
-		XMMATRIX mat;	// ３Ｄ変換行列
+		XMMATRIX mat;	// ビュープロジェクション行列
+		XMMATRIX matBillboard;//ビルボード行列
+	};
+
+	struct Particle 
+	{
+		//DirectX::を省略
+		using XMFLOAT3 = DirectX::XMFLOAT3;
+
+		//座標
+		XMFLOAT3 position = {};
+		//速度
+		XMFLOAT3 velocity = {};
+		//加速度
+		XMFLOAT3 accel = {};
+		//現在フレーム
+		int frame = 0;
+		//終了フレーム
+		int num_frame = 0;
+
+		//スケール
+		float scale = 1.0f;
+		//初期値
+		float s_scale = 1.0f;
+		//最終値
+		float e_scale = 0.0f;
 	};
 
 private: // 定数
@@ -38,7 +65,7 @@ private: // 定数
 	static const float radius;				// 底面の半径
 	static const float prizmHeight;			// 柱の高さ
 	static const int planeCount = division * 2 + division * 2;		// 面の数
-	static const int vertexCount = 1;//頂点数
+	static const int vertexCount = 1024;//頂点数
 
 public: // 静的メンバ関数
 	/// <summary>
@@ -64,7 +91,7 @@ public: // 静的メンバ関数
 	/// 3Dオブジェクト生成
 	/// </summary>
 	/// <returns></returns>
-	static Object3d* Create();
+	static ParticleManager* Create();
 
 	/// <summary>
 	/// 視点座標の取得
@@ -101,6 +128,15 @@ public: // 静的メンバ関数
 	/// </summary>
 	/// <param name="move">移動量</param>
 	static void CameraMoveEyeVector(XMFLOAT3 move);
+
+	/// <summary>
+	/// パーティクルの追加
+	/// </summary>
+	/// <param name="life">生存時間</param>
+	/// <param name="position">初期座標</param>
+	/// <param name="velocity">速度</param>
+	/// <param name="accel">加速度</param>
+	void Add(int life, XMFLOAT3 position, XMFLOAT3 velocity, XMFLOAT3 accel,float start_scale,float end_scale);
 private: // 静的メンバ変数
 	// デバイス
 	static ID3D12Device* device;
@@ -186,30 +222,26 @@ public: // メンバ関数
 	/// </summary>
 	void Draw();
 
-	/// <summary>
-	/// 座標の取得
-	/// </summary>
-	/// <returns>座標</returns>
-	const XMFLOAT3& GetPosition() const { return position; }
+	///// <summary>
+	///// 座標の取得
+	///// </summary>
+	///// <returns>座標</returns>
+	//const XMFLOAT3& GetPosition() const { return position; }
 
-	/// <summary>
-	/// 座標の設定
-	/// </summary>
-	/// <param name="position">座標</param>
-	void SetPosition(const XMFLOAT3& position) { this->position = position; }
+	///// <summary>
+	///// 座標の設定
+	///// </summary>
+	///// <param name="position">座標</param>
+	//void SetPosition(const XMFLOAT3& position) { this->position = position; }
 
 private: // メンバ変数
 	ComPtr<ID3D12Resource> constBuff; // 定数バッファ
-	// 色
-	XMFLOAT4 color = { 1,1,1,1 };
-	// ローカルスケール
-	XMFLOAT3 scale = { 1,1,1 };
-	// X,Y,Z軸回りのローカル回転角
-	XMFLOAT3 rotation = { 0,0,0 };
-	// ローカル座標
-	XMFLOAT3 position = { 0,0,0 };
-	// ローカルワールド変換行列
-	XMMATRIX matWorld;
-	// 親オブジェクト
-	Object3d* parent = nullptr;
+	//// 色
+	//XMFLOAT4 color = { 1,1,1,1 };
+	//// ローカルスケール
+	//XMFLOAT3 scale = { 1,1,1 };
+	//パーティクル配列
+	std::forward_list<Particle> particles;
+	
+
 };

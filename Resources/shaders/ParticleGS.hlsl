@@ -1,4 +1,4 @@
-#include "BasicShaderHeader.hlsli"
+#include "Particle.hlsli"
 
 //[maxvertexcount(1)]
 //void main(
@@ -45,10 +45,12 @@ void main(
 	GSOutput element;
 	//4点分まわす
 	for (uint i = 0; i < vnum; i++) {
-		//ワールド座標スペースで、ずらす
-		element.svpos =
-			input[0].pos
-			+ offset_array[i];
+		//中心からのオフセットをスケーリング
+		float4 offset = offset_array[i]*input[0].scale;
+		//中心からのオフセットをビルボード回転(モデル座標)
+		offset = mul(matBillboard, offset);
+		//オフセット分ずらす(ワールド座標)
+		element.svpos = input[0].pos + offset;
 		//ビュー変換、射影変換
 		element.svpos = mul(mat, element.svpos);
 		element.uv = uv_array[i];
