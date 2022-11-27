@@ -142,6 +142,7 @@ void GameScene::Draw()
 	// 背景スプライト描画
 	spriteBG->Draw();
 
+	object3D->Draw();
 	/// <summary>
 	/// ここに背景スプライトの描画処理を追加できる
 	/// </summary>

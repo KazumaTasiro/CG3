@@ -147,7 +147,7 @@
     <ClInclude Include="DirectXCommon.h" />
     <ClInclude Include="GameScene.h" />
     <ClInclude Include="Input.h" />
-    <ClInclude Include="object3D.h" />
+    <ClInclude Include="object3d.h" />
     <ClInclude Include="ParticleManager.h" />
     <ClInclude Include="Sprite.h" />
     <ClInclude Include="WinApp.h" />
