@@ -36,6 +36,9 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 
 	// 背景スプライト生成
 	spriteBG = Sprite::Create(1, { 0.0f,0.0f });
+	object3D = Object3d::Create();
+	object3D->Update();
+
 	// 3Dオブジェクト生成
 	particleMan = ParticleManager::Create();
 	particleMan->Update();
