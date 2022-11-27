@@ -66,4 +66,6 @@ private: // メンバ変数
 	Sprite* sprite1_ = nullptr;
 	Sprite* sprite2_ = nullptr;
 
+	int count = 0;
+
 };

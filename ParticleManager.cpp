@@ -154,6 +154,8 @@ void ParticleManager::Add(int life, XMFLOAT3 position, XMFLOAT3 velocity, XMFLOA
 	p.velocity = velocity;
 	p.accel = accel;
 	p.num_frame = life;
+	p.s_scale = start_scale;
+	p.e_scale = end_scale;
 }
 
 void ParticleManager::InitializeDescriptorHeap()
@@ -621,7 +623,7 @@ void ParticleManager::Update()
 
 	//寿命が尽きたパーティクルを全削除
 	particles.remove_if([](Particle& x) {
-		return x.frame >= x.num_frame;
+		return x.e_scale >= x.scale;
 		}
 	);
 	//全パーティクル更新
