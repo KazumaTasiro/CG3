@@ -34,13 +34,13 @@ Object3d::VertexPosNormalUv Object3d::vertices[vertexCount];
 unsigned short Object3d::indices[indexCount];
 XMMATRIX Object3d::matBillboard = XMMatrixIdentity();
 XMMATRIX Object3d::matBillboardY = XMMatrixIdentity();
-void Object3d::StaticInitialize(ID3D12Device* device, int window_width, int window_height)
+void Object3d::StaticInitialize(ID3D12Device * device, int window_width, int window_height)
 {
 	// nullptrチェック
 	assert(device);
 
 	Object3d::device = device;
-
+		
 	// デスクリプタヒープの初期化
 	InitializeDescriptorHeap();
 
@@ -58,7 +58,7 @@ void Object3d::StaticInitialize(ID3D12Device* device, int window_width, int wind
 
 }
 
-void Object3d::PreDraw(ID3D12GraphicsCommandList* cmdList)
+void Object3d::PreDraw(ID3D12GraphicsCommandList * cmdList)
 {
 	// PreDrawとPostDrawがペアで呼ばれていなければエラー
 	assert(Object3d::cmdList == nullptr);
@@ -80,7 +80,7 @@ void Object3d::PostDraw()
 	Object3d::cmdList = nullptr;
 }
 
-Object3d* Object3d::Create()
+Object3d * Object3d::Create()
 {
 	// 3Dオブジェクトのインスタンスを生成
 	Object3d* object3d = new Object3d();
@@ -132,19 +132,51 @@ void Object3d::CameraMoveVector(XMFLOAT3 move)
 void Object3d::CameraMoveEyeVector(XMFLOAT3 move)
 {
 	XMFLOAT3 eye_moved = GetEye();
-
+	
 	eye_moved.x += move.x;
 	eye_moved.y += move.y;
 	eye_moved.z += move.z;
-
+	
 	SetEye(eye_moved);
+	
+}
 
+void Object3d::UpdateMat()
+{
+	HRESULT result;
+	XMMATRIX matScale, matRot, matTrans;
+
+	// スケール、回転、平行移動行列の計算
+	matScale = XMMatrixScaling(scale.x, scale.y, scale.z);
+	matRot = XMMatrixIdentity();
+	matRot *= XMMatrixRotationZ(XMConvertToRadians(rotation.z));
+	matRot *= XMMatrixRotationX(XMConvertToRadians(rotation.x));
+	matRot *= XMMatrixRotationY(XMConvertToRadians(rotation.y));
+	matTrans = XMMatrixTranslation(position.x, position.y, position.z);
+
+	// ワールド行列の合成
+	matWorld2 = XMMatrixIdentity(); // 変形をリセット
+
+	matWorld2 *= matTrans; // ワールド行列に平行移動を反映
+
+	////// 親オブジェクトがあれば
+	////if (parent != nullptr) {
+	////	// 親オブジェクトのワールド行列を掛ける
+	////	matWorld *= parent->matWorld;
+	////}
+
+	// 定数バッファへデータ転送
+	ConstBufferData* constMap2 = nullptr;
+	result = constBuff->Map(0, nullptr, (void**)&constMap2);
+	constMap2->color = color;
+	constMap2->mat = matWorld2 * matView * matProjection;	// 行列の合成
+	constBuff->Unmap(0, nullptr);
 }
 
 void Object3d::InitializeDescriptorHeap()
 {
 	HRESULT result = S_FALSE;
-
+	
 	// デスクリプタヒープを生成	
 	D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc = {};
 	descHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
@@ -336,7 +368,7 @@ void Object3d::LoadTexture()
 	ScratchImage scratchImg{};
 
 	// WICテクスチャのロード
-	result = LoadFromWICFile(L"Resources/tex1.png", WIC_FLAGS_NONE, &metadata, scratchImg);
+	result = LoadFromWICFile( L"Resources/mario.jpg", WIC_FLAGS_NONE, &metadata, scratchImg);
 	assert(SUCCEEDED(result));
 
 	ScratchImage mipChain{};
@@ -610,7 +642,7 @@ void Object3d::UpdateViewMatrix()
 	XMVECTOR upVector = XMLoadFloat3(&up);
 
 	//カメラZ軸(視点方向)
-	XMVECTOR cameraAxisZ = XMVectorSubtract(targetPosition, eyePosition);
+	XMVECTOR cameraAxisZ = XMVectorSubtract(targetPosition,eyePosition);
 
 	//0ベクトルだと向きが定まらないので除外
 	assert(!XMVector3Equal(cameraAxisZ, XMVectorZero()));
@@ -624,7 +656,7 @@ void Object3d::UpdateViewMatrix()
 	//カメラX軸(右方向)
 	XMVECTOR cameraAxisX;
 	//X軸は上方向→Z軸の外積で求まる
-	cameraAxisX = XMVector3Cross(upVector, cameraAxisZ);
+	cameraAxisX = XMVector3Cross(upVector,cameraAxisZ);
 	//ベクトルを正規化
 	cameraAxisX = XMVector3Normalize(cameraAxisX);
 
@@ -639,7 +671,7 @@ void Object3d::UpdateViewMatrix()
 	matCameraRot.r[0] = cameraAxisX;
 	matCameraRot.r[1] = cameraAxisY;
 	matCameraRot.r[2] = cameraAxisZ;
-	matCameraRot.r[3] = XMVectorSet(0, 0, 0, 1);
+	matCameraRot.r[3] = XMVectorSet(0,0,0,1);
 
 	//転置により逆行列(逆回転)を計算
 	matView = XMMatrixTranspose(matCameraRot);
@@ -722,14 +754,14 @@ void Object3d::Update()
 
 	matWorld *= matScale; // ワールド行列にスケーリングを反映
 	matWorld *= matRot; // ワールド行列に回転を反映
-	matWorld *= matBillboardY;//ビルボード行列を掛ける
+	matWorld *= matBillboard;//ビルボード行列を掛ける
 	matWorld *= matTrans; // ワールド行列に平行移動を反映
 
-	// 親オブジェクトがあれば
-	if (parent != nullptr) {
-		// 親オブジェクトのワールド行列を掛ける
-		matWorld *= parent->matWorld;
-	}
+	//// 親オブジェクトがあれば
+	//if (parent != nullptr) {
+	//	// 親オブジェクトのワールド行列を掛ける
+	//	matWorld *= parent->matWorld;
+	//}
 
 	// 定数バッファへデータ転送
 	ConstBufferData* constMap = nullptr;
@@ -744,7 +776,7 @@ void Object3d::Draw()
 	// nullptrチェック
 	assert(device);
 	assert(Object3d::cmdList);
-
+		
 	// 頂点バッファの設定
 	cmdList->IASetVertexBuffers(0, 1, &vbView);
 	// インデックスバッファの設定

@@ -102,6 +102,7 @@ public: // 静的メンバ関数
 
 	static void CameraMoveEyeVector(XMFLOAT3 move);
 
+
 private: // 静的メンバ変数
 	// デバイス
 	static ID3D12Device* device;
@@ -204,7 +205,10 @@ public: // メンバ関数
 	/// 座標の設定
 	/// </summary>
 	/// <param name="position">座標</param>
-	void SetPosition(const XMFLOAT3& position) { this->position = position; }
+	void SetPosition(const XMFLOAT3& position) { this->position = position;}
+
+
+	void UpdateMat();
 
 private: // メンバ変数
 	ComPtr<ID3D12Resource> constBuff; // 定数バッファ
@@ -217,7 +221,10 @@ private: // メンバ変数
 	// ローカル座標
 	XMFLOAT3 position = { 0,0,0 };
 	// ローカルワールド変換行列
+
 	XMMATRIX matWorld;
+	XMMATRIX matWorld2;
 	// 親オブジェクト
 	Object3d* parent = nullptr;
 };
+
